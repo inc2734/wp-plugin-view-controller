@@ -11,4 +11,14 @@ $ composer require inc2734/wp-plugin-view-controller
 
 ## How to use
 ```
+use Inc2734\WP_Plugin_View_Controller\Bootstrap;
+
+$bootstrap = new Bootstrap(
+  [
+    'prefix' => 'prefix_',
+    'path'   => __DIR__ . '/templates/',
+  ]
+);
+
+$bootstrap->render( $slug, $name, $args );
 ```

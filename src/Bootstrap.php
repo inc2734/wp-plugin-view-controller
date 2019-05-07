@@ -7,9 +7,119 @@
 
 namespace Inc2734\WP_Plugin_View_Controller;
 
+use Inc2734\WP_Plugin_View_Controller\App\Model\Variable;
+
 class Bootstrap {
 
-	public function __construct() {
-		load_textdomain( 'inc2734-wp-plugin-view-controller', __DIR__ . '/languages/' . get_locale() . '.mo' );
+	/**
+	 * Prefix of hooks
+	 *
+	 * @var string
+	 */
+	protected $prefix = '';
+
+	/**
+	 * Default template root path
+	 *
+	 * @var string
+	 */
+	protected $path = '';
+
+	/**
+	 * Variable object
+	 *
+	 * @var Variable
+	 */
+	protected $variable;
+
+	/**
+	 * @param array $args
+	 * 	@var string $prefix Prefix of hooks
+	 * 	@var string $path Default template root path
+	 */
+	public function __construct( array $args = [] ) {
+		$args = shortcode_atts(
+			[
+				'prefix' => 'inc2734_wp_plugin_view_controller_',
+				'path'   => untrailingslashit( __DIR__ ) . '/templates',
+			],
+			$args
+		);
+
+		$this->prefix   = $args['prefix'];
+		$this->path     = $args['path'];
+		$this->variable = new Variable;
+	}
+
+	/**
+	 * Render template
+	 *
+	 * @param string $slug
+	 * @param string $name
+	 * @param array $vars
+	 */
+	public function render( $slug, $name = null, $vars = [] ) {
+		ob_start();
+
+		$this->variable->save( $vars );
+
+		$templates = $this->_get_template_part_slugs( $slug, $name );
+		$this->_locate_template( $templates );
+		$html = ob_get_clean();
+
+		// @codingStandardsIgnoreStart
+		echo apply_filters( $this->prefix . 'view_render', $html, $slug, $name, $vars );
+		// @codingStandardsIgnoreEnd
+	}
+
+	/**
+	 * Return candidate file names of the root template part
+	 *
+	 * @param string $slug
+	 * @param string $name
+	 * @param array $vars
+	 * @return array
+	 */
+	protected function _get_template_part_slugs( $slug, $name = null, $vars = [] ) {
+		$hierarchy = apply_filters(
+			$this->prefix . 'view_hierarchy',
+			[ $this->path ],
+			$slug,
+			$name,
+			$vars
+		);
+		$hierarchy = array_unique( $hierarchy );
+
+		foreach ( $hierarchy as $root ) {
+			if ( $name ) {
+				$templates[] = trailingslashit( $root ) . $slug . '-' . $name . '.php';
+			}
+			$templates[] = trailingslashit( $root ) . $slug . '.php';
+		}
+
+		return $templates;
+	}
+
+	/**
+	 * @see https://developer.wordpress.org/reference/functions/locate_template/
+	 */
+	protected function _locate_template( $templates ) {
+		$located = '';
+
+		foreach ( (array) $templates as $template ) {
+			if ( ! $template ) {
+				continue;
+			} elseif ( file_exists( $template ) ) {
+				$located = $template;
+				break;
+			}
+		}
+
+		if ( '' != $located ) {
+			extract( $this->variable->get_vars() );
+			include( $located );
+		}
+
+		return $located;
 	}
 }
