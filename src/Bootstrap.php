@@ -67,9 +67,34 @@ class Bootstrap {
 		$this->_locate_template( $templates );
 		$html = ob_get_clean();
 
-		// @codingStandardsIgnoreStart
-		echo apply_filters( $this->prefix . 'view_render', $html, $slug, $name, $vars );
-		// @codingStandardsIgnoreEnd
+		$args = apply_filters(
+			$this->prefix . 'view_args',
+			[
+				'slug' => $slug,
+				'name' => $name,
+				'vars' => $vars,
+			]
+		);
+
+		do_action( $this->prefix . 'view_pre_render', $args );
+
+		if ( $this->_enable_debug_mode() ) {
+			$this->_debug_comment( $args, 'Start : ' );
+		}
+
+		if ( false !== has_action( $this->prefix . 'view_' . $args['slug'] ) ) {
+			do_action( $this->prefix . 'view_' . $args['slug'], $args['name'], $args['vars'] );
+		} else {
+			// @codingStandardsIgnoreStart
+			echo apply_filters( $this->prefix . 'view_render', $html, $slug, $name, $vars );
+			// @codingStandardsIgnoreEnd
+		}
+
+		if ( $this->_enable_debug_mode() ) {
+			$this->_debug_comment( $args, 'End : ' );
+		}
+
+		do_action( $this->prefix . 'view_post_render', $args );
 	}
 
 	/**
@@ -121,5 +146,44 @@ class Bootstrap {
 		}
 
 		return $located;
+	}
+
+	/**
+	 * Return true when enable debug mode
+	 *
+	 * @return boolean
+	 */
+	protected function _enable_debug_mode() {
+		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+			return;
+		}
+
+		if ( is_customize_preview() || is_admin() ) {
+			return;
+		}
+
+		if ( function_exists( 'tests_add_filter' ) ) {
+			return;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Print debug comment
+	 *
+	 * @param array $args
+	 * @param string $prefix
+	 * @return void
+	 */
+	public function _debug_comment( $args, $prefix = null ) {
+		if ( ! $args['slug'] ) {
+			return;
+		}
+
+		$slug  = $args['slug'];
+		$slug .= $args['name'] ? '-' . $args['name'] : '';
+		$slug  = str_replace( [ WP_PLUGIN_DIR, get_template_directory(), get_stylesheet_directory() ], '', $this->path ) . $slug;
+		printf( "\n" . '<!-- %1$s%2$s -->' . "\n", esc_html( $prefix ), esc_html( $slug ) );
 	}
 }
