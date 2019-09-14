@@ -26,6 +26,13 @@ $bootstrap->render( $slug, $name, $args );
 ## Filter hooks
 ### <prefix>view_args
 ```
+/**
+ * @param array $args
+ *  @var string $slug
+ *  @var string $name
+ *  @var array $vars
+ * @param array
+ */
 add_filter(
 	'<prefix>view_args',
 	function( $args ) {
@@ -36,6 +43,13 @@ add_filter(
 
 ### <prefix>view_render
 ```
+/**
+ * @param string $html
+ * @param string $slug
+ * @param string $name
+ * @param array $vars
+ * @return string
+ */
 add_filter(
 	'<prefix>view_render',
 	function( $html, $slug, $name, $vars ) {
@@ -49,6 +63,12 @@ add_filter(
 ## Action hooks
 ### <prefix>view_pre_render
 ```
+/**
+ * @param array $args
+ *  @var string $slug
+ *  @var string $name
+ *  @var array $vars
+ */
 add_action(
 	'<prefix>view_pre_render',
 	function( $args ) {
@@ -58,6 +78,12 @@ add_action(
 
 ### <prefix>view_post_render
 ```
+/**
+ * @param array $args
+ *  @var string $slug
+ *  @var string $name
+ *  @var array $vars
+ */
 add_action(
 	'<prefix>view_post_render',
 	function( $args ) {
@@ -67,6 +93,10 @@ add_action(
 
 ### <prefix>view_<slug>
 ```
+/**
+ * @param string $name
+ * @param array $vars
+ */
 add_action(
 	'<prefix>view_<slug>',
 	function( $name, $vars ) {
@@ -81,8 +111,11 @@ add_action(
 
 ### <prefix>view_<slug>-<name>
 ```
+/**
+ * @param array $vars
+ */
 add_action(
-	'<prefix>view_<slug>',
+	'<prefix>view_<slug>-<name>',
 	function( $vars ) {
 		?>
 		HTML
