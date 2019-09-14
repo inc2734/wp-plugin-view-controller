@@ -84,11 +84,19 @@ class Bootstrap {
 
 		if ( false !== has_action( $this->prefix . 'view_' . $args['slug'] ) ) {
 			do_action( $this->prefix . 'view_' . $args['slug'], $args['name'], $args['vars'] );
-		} else {
-			// @codingStandardsIgnoreStart
-			echo apply_filters( $this->prefix . 'view_render', $html, $slug, $name, $vars );
-			// @codingStandardsIgnoreEnd
+			return;
 		}
+
+		if ( $name ) {
+			if ( false !== has_action( $this->prefix . 'view_' . $args['slug'] . '-' . $args['name'] ) ) {
+				do_action( $this->prefix . 'view_' . $args['slug'] . '-' . $args['name'], $args['vars'] );
+				return;
+			}
+		}
+
+		// @codingStandardsIgnoreStart
+		echo apply_filters( $this->prefix . 'view_render', $html, $slug, $name, $vars );
+		// @codingStandardsIgnoreEnd
 
 		if ( $this->_enable_debug_mode() ) {
 			$this->_debug_comment( $args, 'End : ' );
