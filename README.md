@@ -24,7 +24,7 @@ $bootstrap->render( $slug, $name, $args );
 ```
 
 ## Filter hooks
-### <prefix>view_args
+### &lt;prefix&gt;view_args
 ```
 /**
  * @param array $args
@@ -41,7 +41,7 @@ add_filter(
 );
 ```
 
-### <prefix>view_render
+### &lt;prefix&gt;view_render
 ```
 /**
  * @param string $html
@@ -61,7 +61,7 @@ add_filter(
 ```
 
 ## Action hooks
-### <prefix>view_pre_render
+### &lt;prefix&gt;view_pre_render
 ```
 /**
  * @param array $args
@@ -76,7 +76,7 @@ add_action(
 );
 ```
 
-### <prefix>view_post_render
+### &lt;prefix&gt;view_post_render
 ```
 /**
  * @param array $args
@@ -91,7 +91,7 @@ add_action(
 );
 ```
 
-### <prefix>view_<slug>
+### &lt;prefix&gt;view_&lt;slug&gt;
 ```
 /**
  * @param string $name
@@ -109,7 +109,7 @@ add_action(
 );
 ```
 
-### <prefix>view_<slug>-<name>
+### &lt;prefix&gt;view_&lt;slug&gt;-&lt;name&gt;
 ```
 /**
  * @param array $vars

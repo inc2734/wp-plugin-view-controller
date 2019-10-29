@@ -59,14 +59,6 @@ class Bootstrap {
 	 * @param array $vars
 	 */
 	public function render( $slug, $name = null, $vars = [] ) {
-		ob_start();
-
-		$this->variable->save( $vars );
-
-		$templates = $this->_get_template_part_slugs( $slug, $name );
-		$this->_locate_template( $templates );
-		$html = ob_get_clean();
-
 		$args = apply_filters(
 			$this->prefix . 'view_args',
 			[
@@ -76,23 +68,28 @@ class Bootstrap {
 			]
 		);
 
+		$this->variable->save( $vars );
+
 		do_action( $this->prefix . 'view_pre_render', $args );
 
 		if ( $this->_enable_debug_mode() ) {
 			$this->_debug_comment( $args, 'Start : ' );
 		}
 
-		if ( false !== has_action( $this->prefix . 'view_' . $args['slug'] ) ) {
-			do_action( $this->prefix . 'view_' . $args['slug'], $args['name'], $args['vars'] );
-			return;
+		ob_start();
+
+		$action_with_name = $this->prefix . 'view_' . $args['slug'] . '-' . $args['name'];
+		$action           = $this->prefix . 'view_' . $args['slug'];
+		if ( $name && has_action( $action_with_name ) ) {
+			do_action( $action_with_name, $vars );
+		} elseif ( has_action( $action ) ) {
+			do_action( $action, $name, $vars );
+		} else {
+			$templates = $this->_get_template_part_slugs( $slug, $name );
+			$this->_locate_template( $templates );
 		}
 
-		if ( $name ) {
-			if ( false !== has_action( $this->prefix . 'view_' . $args['slug'] . '-' . $args['name'] ) ) {
-				do_action( $this->prefix . 'view_' . $args['slug'] . '-' . $args['name'], $args['vars'] );
-				return;
-			}
-		}
+		$html = ob_get_clean();
 
 		// @codingStandardsIgnoreStart
 		echo apply_filters( $this->prefix . 'view_render', $html, $slug, $name, $vars );
