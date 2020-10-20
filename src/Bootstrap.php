@@ -72,28 +72,51 @@ class Bootstrap {
 
 		do_action( $this->prefix . 'view_pre_render', $args );
 
+		$html = apply_filters(
+			$this->prefix . 'view_render_definition',
+			null,
+			$args['slug'],
+			$args['name'],
+			$args['vars']
+		);
+
+		if ( is_null( $html ) ) {
+			$action_with_name = $this->prefix . 'view_' . $args['slug'] . '-' . $args['name'];
+			$action           = $this->prefix . 'view_' . $args['slug'];
+
+			if ( $args['name'] && has_action( $action_with_name ) ) {
+				ob_start();
+				// @deprecated
+				do_action( $action_with_name, $args['vars'] );
+				$html = ob_get_clean();
+			} elseif ( has_action( $action ) ) {
+				ob_start();
+				// @deprecated
+				do_action( $action, $args['name'], $args['vars'] );
+				$html = ob_get_clean();
+			}
+		}
+
+		if ( is_null( $html ) ) {
+			$templates = $this->_get_template_part_slugs( $args['slug'], $args['name'] );
+			ob_start();
+			$this->_locate_template( $templates );
+			$html = ob_get_clean();
+		}
+
 		if ( $this->_enable_debug_mode() ) {
 			$this->_debug_comment( $args, 'Start : ' );
 		}
 
-		ob_start();
+		$html = apply_filters(
+			$this->prefix . 'view_render',
+			$html,
+			$args['slug'],
+			$args['name'],
+			$args['vars']
+		);
 
-		$action_with_name = $this->prefix . 'view_' . $args['slug'] . '-' . $args['name'];
-		$action           = $this->prefix . 'view_' . $args['slug'];
-		if ( $name && has_action( $action_with_name ) ) {
-			do_action( $action_with_name, $vars );
-		} elseif ( has_action( $action ) ) {
-			do_action( $action, $name, $vars );
-		} else {
-			$templates = $this->_get_template_part_slugs( $slug, $name );
-			$this->_locate_template( $templates );
-		}
-
-		$html = ob_get_clean();
-
-		// @codingStandardsIgnoreStart
-		echo apply_filters( $this->prefix . 'view_render', $html, $slug, $name, $vars );
-		// @codingStandardsIgnoreEnd
+		echo $html; // xss ok.
 
 		if ( $this->_enable_debug_mode() ) {
 			$this->_debug_comment( $args, 'End : ' );
@@ -188,7 +211,11 @@ class Bootstrap {
 
 		$slug  = $args['slug'];
 		$slug .= $args['name'] ? '-' . $args['name'] : '';
-		$slug  = str_replace( [ WP_PLUGIN_DIR, get_template_directory(), get_stylesheet_directory() ], '', $this->path ) . $slug;
+		$slug  = str_replace(
+			[ WP_PLUGIN_DIR, get_template_directory(), get_stylesheet_directory() ],
+			'',
+			$this->path
+		) . $slug;
 		printf( "\n" . '<!-- %1$s%2$s -->' . "\n", esc_html( $prefix ), esc_html( $slug ) );
 	}
 }

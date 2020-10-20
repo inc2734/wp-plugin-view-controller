@@ -46,6 +46,22 @@ class BootstrapTest extends WP_UnitTestCase {
 	/**
 	 * @test
 	 */
+	public function define_html_by_filter() {
+		add_filter(
+			$this->prefix . 'view_render_definition',
+			function( $html ) {
+				return 'foo';
+			}
+		);
+
+		ob_start();
+		$this->controller->render( 'slug', 'name', [ 'key' => 'value' ] );
+		$this->assertEquals( 'foo', trim( ob_get_clean() ) );
+	}
+
+	/**
+	 * @test
+	 */
 	public function define_html() {
 		add_action(
 			$this->prefix . 'view_slug',
