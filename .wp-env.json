@@ -1,0 +1,12 @@
+{
+  "core": null,
+  "themes": [
+    "https://downloads.wordpress.org/theme/twentytwenty.zip"
+  ],
+  "mappings": {
+    "wp-content/plugins/wp-plugin-view-controller": "./"
+  },
+  "config": {
+    "WP_DEBUG": true
+  }
+}

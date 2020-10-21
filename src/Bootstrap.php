@@ -26,16 +26,9 @@ class Bootstrap {
 	protected $path = '';
 
 	/**
-	 * Variable object
-	 *
-	 * @var Variable
-	 */
-	protected $variable;
-
-	/**
-	 * @param array $args
-	 * 	@var string $prefix Prefix of hooks
-	 * 	@var string $path Default template root path
+	 * @param array $args Argments.
+	 *  - string $prefix Prefix of hooks.
+	 *  - string $path   Default template root path.
 	 */
 	public function __construct( array $args = [] ) {
 		$args = shortcode_atts(
@@ -46,17 +39,16 @@ class Bootstrap {
 			$args
 		);
 
-		$this->prefix   = $args['prefix'];
-		$this->path     = $args['path'];
-		$this->variable = new Variable;
+		$this->prefix = $args['prefix'];
+		$this->path   = $args['path'];
 	}
 
 	/**
-	 * Render template
+	 * Render template.
 	 *
-	 * @param string $slug
-	 * @param string $name
-	 * @param array $vars
+	 * @param string $slug The slug name for the generic template.
+	 * @param string $name The name of the specialised template.
+	 * @param array  $vars Additional arguments passed to the template.
 	 */
 	public function render( $slug, $name = null, $vars = [] ) {
 		$args = apply_filters(
@@ -67,8 +59,6 @@ class Bootstrap {
 				'vars' => $vars,
 			]
 		);
-
-		$this->variable->save( $vars );
 
 		do_action( $this->prefix . 'view_pre_render', $args );
 
@@ -98,10 +88,14 @@ class Bootstrap {
 		}
 
 		if ( is_null( $html ) ) {
+			$this->_init_template_args( $args['vars'] );
+
 			$templates = $this->_get_template_part_slugs( $args['slug'], $args['name'] );
 			ob_start();
-			$this->_locate_template( $templates );
+			$this->_locate_template( $templates, $args['vars'] );
 			$html = ob_get_clean();
+
+			$this->_reset_template_args();
 		}
 
 		if ( $this->_enable_debug_mode() ) {
@@ -126,11 +120,41 @@ class Bootstrap {
 	}
 
 	/**
-	 * Return candidate file names of the root template part
+	 * Initialize template args.
 	 *
-	 * @param string $slug
-	 * @param string $name
-	 * @param array $vars
+	 * @param array $vars Additional arguments passed to the template.
+	 */
+	protected function _init_template_args( $vars ) {
+		global $wp_version, $wp_query;
+
+		set_query_var( '_wp_plugin_view_controller_backup_query_vars', $wp_query->query_vars );
+
+		if ( version_compare( $wp_version, '5.5' ) < 0 ) {
+			$vars['args'] = $vars;
+		}
+
+		foreach ( $vars as $var => $value ) {
+			if ( null === get_query_var( $var, null ) ) {
+				set_query_var( $var, $value );
+			}
+		}
+	}
+
+	/**
+	 * Reset template args.
+	 */
+	protected function _reset_template_args() {
+		global $wp_query;
+
+		$wp_query->query_vars = get_query_var( '_wp_plugin_view_controller_backup_query_vars' );
+	}
+
+	/**
+	 * Return candidate file names of the root template part.
+	 *
+	 * @param string $slug The slug name for the generic template.
+	 * @param string $name The name of the specialised template.
+	 * @param array  $vars Additional arguments passed to the template.
 	 * @return array
 	 */
 	protected function _get_template_part_slugs( $slug, $name = null, $vars = [] ) {
@@ -143,6 +167,7 @@ class Bootstrap {
 		);
 		$hierarchy = array_unique( $hierarchy );
 
+		$templates = [];
 		foreach ( $hierarchy as $root ) {
 			if ( $name ) {
 				$templates[] = trailingslashit( $root ) . $slug . '-' . $name . '.php';
@@ -154,9 +179,15 @@ class Bootstrap {
 	}
 
 	/**
+	 * Add template_part_root_hierarchy check to locate_template().
+	 *
 	 * @see https://developer.wordpress.org/reference/functions/locate_template/
+	 *
+	 * @param string|array $templates Template file(s) to search for, in order.
+	 * @param array        $vars Additional arguments passed to the template.
+	 * @return string
 	 */
-	protected function _locate_template( $templates ) {
+	protected function _locate_template( $templates, $vars = [] ) {
 		$located = '';
 
 		foreach ( (array) $templates as $template ) {
@@ -168,16 +199,15 @@ class Bootstrap {
 			}
 		}
 
-		if ( '' != $located ) {
-			extract( $this->variable->get_vars() );
-			include( $located );
+		if ( $located ) {
+			load_template( $located, false, $vars );
 		}
 
 		return $located;
 	}
 
 	/**
-	 * Return true when enable debug mode
+	 * Return true when enable debug mode.
 	 *
 	 * @return boolean
 	 */
@@ -198,11 +228,10 @@ class Bootstrap {
 	}
 
 	/**
-	 * Print debug comment
+	 * Print debug comment.
 	 *
-	 * @param array $args
-	 * @param string $prefix
-	 * @return void
+	 * @param array  $args   Argments.
+	 * @param string $prefix Prefix of the message.
 	 */
 	public function _debug_comment( $args, $prefix = null ) {
 		if ( ! $args['slug'] ) {

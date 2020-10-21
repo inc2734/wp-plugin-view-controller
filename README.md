@@ -1,6 +1,6 @@
 # WP Plugin View Controller
 
-[![Build Status](https://travis-ci.org/inc2734/wp-plugin-view-controller.svg?branch=master)](https://travis-ci.org/inc2734/wp-plugin-view-controller)
+[![Build Status](https://travis-ci.com/inc2734/wp-plugin-view-controller.svg?branch=master)](https://travis-ci.com/inc2734/wp-plugin-view-controller)
 [![Latest Stable Version](https://poser.pugx.org/inc2734/wp-plugin-view-controller/v/stable)](https://packagist.org/packages/inc2734/wp-plugin-view-controller)
 [![License](https://poser.pugx.org/inc2734/wp-plugin-view-controller/license)](https://packagist.org/packages/inc2734/wp-plugin-view-controller)
 
@@ -38,6 +38,25 @@ add_filter(
 	function( $args ) {
 		return $args;
 	}
+);
+```
+
+### &lt;prefix&gt;view_render_definition
+```
+/**
+ * @param null|string $html
+ * @param string $slug
+ * @param string $name
+ * @param array $vars
+ * @return string
+ */
+add_filter(
+	'<prefix>view_render_definition',
+	function( $html, $slug, $name, $vars ) {
+		return 'YOUR HTML';
+	},
+	10,
+	4
 );
 ```
 
